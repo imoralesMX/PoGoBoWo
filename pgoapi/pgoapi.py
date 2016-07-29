@@ -351,7 +351,7 @@ class PGoApi:
             return r
         elif r is None:  # This should detect a softban
             self.log.info('Soft ban detected - Attempting bypass')
-            for bypass in itertools.repea(None, 40):  # Current bypass is to spin a fort 40 times
+            for bypass in itertools.repeat(None, 40):  # Current bypass is to spin a fort 40 times
                 self.spin_near_fort()
 
     def cleanup_inventory(self, inventory_items=None):
