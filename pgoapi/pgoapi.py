@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import logging
 # import re
+import itertools
 from itertools import chain, imap
 
 # import requests
