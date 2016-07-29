@@ -11,7 +11,7 @@ from pgoapi.rpc_api import RpcApi
 from pgoapi.auth_ptc import AuthPtc
 from pgoapi.auth_google import AuthGoogle
 from pgoapi.exceptions import AuthException, ServerBusyOrOfflineException
-# from termcolor import colored # get color logging soon
+from termcolor import colored
 from pgoapi.protos.POGOProtos.Networking.Requests_pb2 import RequestType
 from pgoapi.protos.POGOProtos import Inventory_pb2 as Inventory
 
@@ -387,12 +387,11 @@ class PGoApi:
                     if pokemon['pokemon_id'] in CANDY_NEEDED_TO_EVOLVE:
                         for inventory_item in inventory_items:
                             if "pokemon_family" in inventory_item['inventory_item_data'] and (inventory_item['inventory_item_data']['pokemon_family']['family_id'] == pokemon['pokemon_id'] or inventory_item['inventory_item_data']['pokemon_family']['family_id'] == (pokemon['pokemon_id'] - 1)) and inventory_item['inventory_item_data']['pokemon_family']['candy'] > CANDY_NEEDED_TO_EVOLVE[pokemon['pokemon_id']]:  # Check to see if the pokemon is able to evolve or not, supports t2 evolutions
-                                self.log.info("Evolving pokemon: %s", self.pokemon_names[str(pokemon['pokemon_id'])])
+                                self.log.info(colored("Evolving pokemon: %s", 'green'), self.pokemon_names[str(pokemon['pokemon_id'])])
                                 self.evolve_pokemon(pokemon_id=pokemon['id'])  # quick press ctrl + c to stop the evolution
                 for pokemon in pokemons[MIN_SIMILAR_POKEMON:]:
                     if 'cp' in pokemon and pokemon_iv_percentage(pokemon) < self.MIN_KEEP_IV and pokemon["cp"] < self.KEEP_CP_OVER:  # remove only if the pokemon is under the IV and CP set up
-                        self.log.debug("Releasing pokemon: %s", pokemon)
-                        self.log.info("Releasing pokemon: %s IV: %s", self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon))
+                        self.log.info(colored("Releasing pokemon: %s IV: %s", 'cyan'), self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon))
                         self.release_pokemon(pokemon_id=pokemon["id"])  # release the unwanted pokemon
 
         if self.RELEASE_DUPLICATES:
@@ -406,15 +405,13 @@ class PGoApi:
                             if pokemon_iv_percentage(pokemon) > pokemon_iv_percentage(last_pokemon):
                                 if pokemon['cp'] * self.DUPLICATE_CP_FORGIVENESS < last_pokemon['cp']:
                                     # release the lesser!
-                                    self.log.debug("Releasing pokemon: %s", last_pokemon)
-                                    self.log.info("Releasing pokemon: %s IV: %s", self.pokemon_names[str(last_pokemon['pokemon_id'])], pokemon_iv_percentage(last_pokemon))
+                                    self.log.info(colored("Releasing pokemon: %s IV: %s", 'cyan'), self.pokemon_names[str(last_pokemon['pokemon_id'])], pokemon_iv_percentage(last_pokemon))
                                     self.release_pokemon(pokemon_id=last_pokemon["id"])
                                 last_pokemon = pokemon
                             else:
                                 if last_pokemon['cp'] * self.DUPLICATE_CP_FORGIVENESS > pokemon['cp']:
                                     # release the lesser!
-                                    self.log.debug("Releasing pokemon: %s", pokemon)
-                                    self.log.info("Releasing pokemon: %s IV: %s", self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon))
+                                    self.log.info(colored("Releasing pokemon: %s IV: %s", 'cyan'), self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon))
                                     self.release_pokemon(pokemon_id=pokemon["id"])
                                 last_pokemon = pokemon
 

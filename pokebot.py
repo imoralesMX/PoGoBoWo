@@ -11,6 +11,7 @@ import json
 import logging
 # import requests
 import argparse
+from termcolor import colored
 from time import sleep
 from pgoapi import PGoApi
 # from pgoapi.utilities import f2i, h2f
@@ -59,7 +60,7 @@ def init_config():
     load = load['accounts'][int(config.__dict__['config_index'])]
     config.__dict__.update(load)
     if config.auth_service not in ['ptc', 'google']:
-        log.error("Invalid Auth service specified! ('ptc' or 'google')")
+        log.error(colored("Invalid Auth service specified! ('ptc' or 'google')", 'red'))
         return None
 
     return config
@@ -94,7 +95,7 @@ def main():
         try:
             api.main_loop()
         except Exception as e:
-            log.exception('Main loop has an ERROR, restarting %s', e)
+            log.exception(colored('Main loop has an ERROR, restarting %s', 'red'), e)
             sleep(30)
             main()
 
