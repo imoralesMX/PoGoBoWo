@@ -10,6 +10,7 @@ import json
 # import struct
 import logging
 # import requests
+from termcolor import colored
 import argparse
 import thread
 from time import sleep
