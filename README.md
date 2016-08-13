@@ -34,7 +34,7 @@ Server status can be found at https://go.jooas.com/
     2. Then activate it here (select your project on the dropdown menu): https://console.developers.google.com/apis/api/directions_backend/overview?project=_
 6. Then `cp config.json.example config.json` file.
 7. Edit the file with your username, location, password, Google API, and anything else you want to change. (See wiki for documentation)
-8. If you login into Pokemon Go with Google: `python pokebot.py -i 0` and `python pokebot.py -i 1` if you use Pokemon Trainer's Club.
+8. If you login into Pokemon Go with Google: `python run_bot.py -i 0` and `python run_bot.py -i 1` if you use Pokemon Trainer's Club.
 9. When running the bot for the first time add `--cache` to the end.
 10. ???
 11. Profit.
