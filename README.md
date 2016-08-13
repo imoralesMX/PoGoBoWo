@@ -40,7 +40,7 @@ Server status can be found at https://go.jooas.com/
 11. Profit.
 
 99. You can now open your browser and navigate to `http://localhost:3001` and checkout your bot's progress.
-You can change the port by changing the `PORT` env var. eg start your bot with `PORT=8080 python pokebot.py -i 0`.
+You can change the port by changing the `PORT` env var. eg start your bot with `PORT=8080 python run_bot.py -i 0`.
 
 ## Contibuting and TODO
 
@@ -49,9 +49,9 @@ Feel free to contribute code, all you need to do is run `tox` before a commit or
 
 + Move as many options from pgoapi.py into config.json to allow user customization.
 + Fix all the issues. https://github.com/BoBeR182/PoGoBoWo/issues
-+ We need user freindly documentation in the https://github.com/BoBeR182/PoGoBoWo/wiki.
++ Add user friendly documentation to the https://github.com/BoBeR182/PoGoBoWo/wiki.
 + Two modes, as fast XP as possible, or human and undetectable.
 + Auto lucky egg/incense.
 + Detect softban and bypass or avoid softbans.
 + Auto Gym
-+ Make it easier to contirbute to.
++ Make it easier to contribute to.
