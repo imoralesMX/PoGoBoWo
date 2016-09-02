@@ -30,6 +30,8 @@ import platform
 from pgoapi import PGoApi
 from pgoapi import utilities as util
 
+NUMBER_OF_POKEMONS_INSTANCE = {}
+
 # Candy needed to evolve pokemon  to add new pokemon to auto evolve list edit them here
 CANDY_NEEDED_TO_EVOLVE = {1: 124,  # Bulbasaur
                           2: 99,  # Ivysaur
@@ -104,8 +106,6 @@ CANDY_NEEDED_TO_EVOLVE = {1: 124,  # Bulbasaur
 
 POKEBALLS = ["Pokeball", "Great Ball", "Ultra Ball", "Master Ball"]  # you only get one master ball dont waste it botting
 
-MIN_SIMILAR_POKEMON = 1  # change this to keep more doubles if you have release duplicates set to ture
-
 INVENTORY_DICT = {Inventory.ITEM_UNKNOWN: "UNKNOWN",
                   Inventory.ITEM_POKE_BALL: "POKE_BALL",
                   Inventory.ITEM_GREAT_BALL: "GREAT_BALL",
@@ -157,6 +157,7 @@ class PoGObot:
         self.MIN_KEEP_IV = config.get("MIN_KEEP_IV", 0)
         self.KEEP_CP_OVER = config.get("KEEP_CP_OVER", 0)
         self.RELEASE_DUPLICATES = config.get("RELEASE_DUPLICATE", 0)
+        self.MIN_SIMILAR_POKEMON = config.get("MIN_SIMILAR_POKEMON",1)
         self.DUPLICATE_CP_FORGIVENESS = config.get("DUPLICATE_CP_FORGIVENESS", 0)
         self.MAX_BALL_TYPE = config.get("MAX_BALL_TYPE", 0)
         self.SLOW_BUT_STEALTH = config.get("SLOW_BUT_STEALTH", 0)
@@ -169,6 +170,12 @@ class PoGObot:
         self.min_item_counts = dict(
             ((getattr(Inventory, key), value) for key, value in config.get('MIN_ITEM_COUNTS', {}).iteritems())
         )
+        self.FIND_POKEMONS = config.get("FIND_POKEMONS","")
+        self.FIND_POKEMONS_LIST = config.get("FIND_POKEMONS_LIST","")
+        if self.FIND_POKEMONS:
+          self.log.info("FIND_POKEMONS_LIST %s", self.FIND_POKEMONS_LIST)
+        self.FIND_POKEMONS_LIST = self.FIND_POKEMONS_LIST.split(",")
+        
 
     def response_parser(self, res):
         if os.path.isfile("accounts/%s/Inventory.json" % self.config['username']) and 'GET_INVENTORY' in res['responses']:
@@ -379,7 +386,7 @@ class PoGObot:
                     self.api.recycle_inventory_item(item_id=item['item_id'], count=recycle_count)
 
         for pokemons in caught_pokemon.values():
-            if len(pokemons) > MIN_SIMILAR_POKEMON:  # if you have more than 1 of the same amount of pokemon do this
+            if len(pokemons) > self.MIN_SIMILAR_POKEMON:  # if you have more than 1 of the same amount of pokemon do this
                 pokemons = sorted(pokemons, lambda x, y: cmp(x['cp'], y['cp']), reverse=True)
                 for pokemon in pokemons:
                     if pokemon['pokemon_id'] in CANDY_NEEDED_TO_EVOLVE:
@@ -391,12 +398,14 @@ class PoGObot:
                                 if self.SLOW_BUT_STEALTH:
                                     sleep(3 * random.random() + 28)
         excess_pokemons = defaultdict(list)
+
         for pokemons in caught_pokemon.values():
             pokemons = sorted(pokemons, lambda x, y: cmp(x['cp'], y['cp']), reverse=True)
             for pokemon in pokemons:
                 if pokemon['cp'] < self.KEEP_CP_OVER and pokemon_iv_percentage(pokemon) < self.MIN_KEEP_IV and pokemon['pokemon_id'] not in self.evolved_pokemon_ids and (pokemon['pokemon_id'] + 1) not in self.evolved_pokemon_ids:
                     excess_pokemons[pokemon['pokemon_id']].append(pokemon)
                     self.log.debug('Excess pokemon: %s CP: %s IV: %s', self.pokemon_names[str(pokemon['pokemon_id'])], pokemon['cp'], pokemon_iv_percentage(pokemon))
+          
         for pokemons_id in excess_pokemons.keys():
             pokemons = excess_pokemons.pop(pokemons_id)
             top_CP_pokemon = pokemons[0]
@@ -408,9 +417,11 @@ class PoGObot:
                     self.log.debug("Releasing pokemon: %s", pokemon)
                     self.log.info("Releasing pokemon: %s IV: %s CP: %s", self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon), pokemon['cp'])
                     self.api.release_pokemon(pokemon_id=pokemon["id"])
+                    if pokemon['pokemon_id'] in caught_pokemon :
+                      caught_pokemon.pop(pokemon['pokemon_id'])
                     sleep(3 * random.random() + 5)
             if self.RELEASE_DUPLICATES:
-                if len(pokemons) > MIN_SIMILAR_POKEMON:
+                if len(pokemons) > self.MIN_SIMILAR_POKEMON:
                     # chose which pokemon should be released: first check IV, second CP
                     for pokemon in pokemons:
                         if pokemon_iv_percentage(pokemon) > pokemon_iv_percentage(top_CP_pokemon):
@@ -422,6 +433,8 @@ class PoGObot:
                                     self.log.debug("Releasing pokemon: %s", top_CP_pokemon)
                                     self.log.info("Releasing pokemon: %s IV: %s CP: %s", self.pokemon_names[str(top_CP_pokemon['pokemon_id'])], pokemon_iv_percentage(top_CP_pokemon), top_CP_pokemon['cp'])
                                     self.api.release_pokemon(pokemon_id=top_CP_pokemon["id"])
+                                    if pokemon['pokemon_id'] in caught_pokemon :
+                                      caught_pokemon.pop(pokemon['pokemon_id'])
                                     top_CP_pokemon = pokemon
                                     sleep(3 * random.random() + 5)
                         elif top_CP_pokemon['cp'] * self.DUPLICATE_CP_FORGIVENESS > pokemon['cp']:
@@ -432,7 +445,48 @@ class PoGObot:
                                     self.log.debug("Releasing pokemon: %s", pokemon)
                                     self.log.info("Releasing pokemon: %s IV: %s CP: %s", self.pokemon_names[str(pokemon['pokemon_id'])], pokemon_iv_percentage(pokemon), pokemon['cp'])
                                     self.api.release_pokemon(pokemon_id=pokemon["id"])
+                                    if pokemon['pokemon_id'] in caught_pokemon :
+                                      caught_pokemon.pop(pokemon['pokemon_id'])
                                     sleep(3 * random.random() + 5)
+                #else:
+                  #self.log.info("%2.0f ID:%3.0f not released beacause is the only one",len(pokemons), pokemons_id)
+
+        # Search number of intance
+        ######################################################################################################################################################
+        for pokemons in caught_pokemon.values():
+          pokemons = sorted(pokemons, lambda x, y: cmp(x['cp'], y['cp']), reverse=True)
+          for pokemon in pokemons:
+            if pokemon['pokemon_id'] in NUMBER_OF_POKEMONS_INSTANCE:
+              NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']] = NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']] + 1
+            else:
+              NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']] = 1
+        #self.log.info("NUMBER_OF_POKEMONS_INSTANCE: %s", NUMBER_OF_POKEMONS_INSTANCE)
+
+        previous_id = 0
+        top_2 = False
+        i = 0
+        for pokemons in caught_pokemon.values():
+          pokemons = sorted(pokemons, lambda x, y: cmp(x['cp'], y['cp']), reverse=True)
+          for pokemon in pokemons:
+            i = i + 1
+            if previous_id == pokemon["pokemon_id"] :
+              if not top_2:
+                self.log.info("I: %3.0f ID: %3.0f N: %2.0f CP: %4.0f IV: %4.2f Name: %s 2*", i, pokemon['pokemon_id'], NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']], pokemon['cp'], pokemon_iv_percentage(pokemon), self.pokemon_names[str(pokemon['pokemon_id'])])
+                top_2 = True
+              else:
+                self.log.info("I: %3.0f ID: %3.0f N: %2.0f CP: %4.0f IV: %4.2f Name: %s to be released", i, pokemon['pokemon_id'], NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']], pokemon['cp'], pokemon_iv_percentage(pokemon), self.pokemon_names[str(pokemon['pokemon_id'])])
+                self.log.info("Releasing PID: %s",pokemon["id"])
+                self.api.release_pokemon(pokemon_id=pokemon["id"])
+                if pokemon['pokemon_id'] in caught_pokemon :
+                  caught_pokemon.pop(pokemon['pokemon_id'])
+                sleep(2 * random.random() + 1)
+            else:
+              self.log.info("I: %3.0f ID: %3.0f N: %2.0f CP: %4.0f IV: %4.2f Name: %s 1*", i, pokemon['pokemon_id'], NUMBER_OF_POKEMONS_INSTANCE[pokemon['pokemon_id']], pokemon['cp'], pokemon_iv_percentage(pokemon), self.pokemon_names[str(pokemon['pokemon_id'])])
+              top_2 = False
+              previous_id = pokemon["pokemon_id"]
+
+
+        self.log.info("END DUPLICATED")
         return
 
     def disk_encounter_pokemon(self, lureinfo):
@@ -445,7 +499,8 @@ class PoGObot:
             if resp['result'] == 1:
                 capture_status = -1
                 self._pokeball_type = 1
-                while capture_status != 0 and capture_status != 3:
+                if not self.FIND_POKEMONS or (self.FIND_POKEMONS and resp['pokemon_data']['pokemon_id'] in self.FIND_POKEMONS_LIST) :
+                  while capture_status != 0 and capture_status != 3:
                     for balls in range(len(self.pokeballs)):
                         self._pokeball_type = balls
                         if self.pokeballs[balls] > 0:
@@ -475,6 +530,8 @@ class PoGObot:
                         sleep(3 * random.random() + 2)
                     else:
                         sleep(1)
+                else:
+                  self.log.info("IMC - 2 - Leave Pokemon:  %s", self.pokemon_names[str(resp['pokemon_data']['pokemon_id'])])
             return False
         except Exception as e:
             self.log.error("Error in disk encounter %s", e)
@@ -500,7 +557,8 @@ class PoGObot:
         if encounter['status'] == 1:
             capture_status = -1
             self._pokeball_type = 1  # start with a pokeball
-            while capture_status != 0 and capture_status != 3:
+            if not self.FIND_POKEMONS or (self.FIND_POKEMONS and pokemon['pokemon_id'] in self.FIND_POKEMONS_LIST) :
+              while capture_status != 0 and capture_status != 3:
                 for balls in range(len(self.pokeballs)):  # try with each ball type starting with weakest
                     self._pokeball_type = balls
                     if self.pokeballs[balls] > 0:  # if you have less then 1 ball do not attempt to catch em all
@@ -530,6 +588,8 @@ class PoGObot:
                     sleep(3 * random.random() + 2)
                 else:
                     sleep(2)
+            else:
+              self.log.info("IMC - 1 - Leave Pokemon:  %s", self.pokemon_names[str(pokemon['pokemon_id'])])
         return False
 
     def login(self, provider, username, password, cached=False):
