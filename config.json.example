@@ -9,6 +9,7 @@
         "MIN_KEEP_IV" : 50,
         "KEEP_CP_OVER": 500,
         "RELEASE_DUPLICATE": false,
+        "MIN_SIMILAR_POKEMON": 1,
         "DUPLICATE_CP_FORGIVENESS": 0.90,
         "STEP_SIZE": 100,
         "RETURN_START_INTERVAL": 20,
@@ -28,7 +29,9 @@
             "ITEM_BLUK_BERRY": 10,
             "ITEM_NANAB_BERRY": 10,
             "ITEM_REVIVE": 25
-        }
+        },
+        "FIND_POKEMONS":false,
+        "FIND_POKEMONS_LIST":"1,2,3"
     },
     {  "auth_service": "ptc",
         "username": "USERNAME_HERE",
@@ -39,6 +42,7 @@
         "MIN_KEEP_IV" : 50,
         "KEEP_CP_OVER": 200,
         "RELEASE_DUPLICATE": false,
+        "MIN_SIMILAR_POKEMON": 1,
         "DUPLICATE_CP_FORGIVENESS": 0.90,
         "STEP_SIZE": 100,
         "RETURN_START_INTERVAL": 20,
@@ -58,6 +62,8 @@
             "ITEM_BLUK_BERRY": 10,
             "ITEM_NANAB_BERRY": 10,
             "ITEM_REVIVE": 25
-        }
+        },
+        "FIND_POKEMONS":false,
+        "FIND_POKEMONS_LIST":"1,2,3"
     }
     ]}
